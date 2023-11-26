@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Coffee & Dreams - Tienda</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Coffee & Dreams Logo">
+            <h2 id="username-display"></h2>
+            <h2>Coffee & Dreams (๑>◡<๑)</h2>
+            <h3>User: {{ current_user.fullname }}</h3>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('principal') }}">Inicio</a></li>
+                {% if current_user.usertype == 1 %}
+                    <li id="catalog-link"><a href="{{ url_for('mostrar_productos') }}" href="{{ url_for('catalogo') }}">Catálogo</a></li>
+                    <li><a href="{{ url_for('mostrar_usuarios') }}">Usuarios</a></li>
+                {% endif %}
+                <li><a href="{{ url_for('tienda') }}">Tienda</a></li>
+                <li><a href="{{ url_for('acerca') }}">Acerca de</a></li>
+            </ul>
+        </nav>
+        <h3></h3>
+        <a class="btn btn-logout" href="{{ url_for('logout') }}">LogOut</a>
+    </header>
+
+    <main>
+
+        <div class="container">
+            <h1>Tienda</h1>
+
+            <!-- Tabla de productos -->
+            <table class="table" id="tienda-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Imagen</th>
+                        <th>Precio</th>
+                        <th>Cantidad</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Aquí se llenará dinámicamente la tabla con productos -->
+                    {% for producto in productos %}
+                    <tr>
+                        <td>{{ producto.nombre }}</td>
+                        <td><img src="{{ producto.imagen }}" alt="Imagen del producto"></td>
+                        <td>{{ producto.precio }}</td>
+                        <td>
+                            <input type="number" class="cantidad" min="0" value="0" data-precio="{{ producto.precio }}">
+                        </td>
+                        <td class="subtotal">0</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <hr>
+
+            <div class="row">
+                <div class="col-md-4 offset-md-8 resumen-compra">
+                    <h3>Resumen de Compra</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resumenCompra">
+                            <!-- Los detalles de la compra se generarán dinámicamente con JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2">Total:</td>
+                                <td id="total">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <button class="btn btn-primary" id="finalizarCompra">Finalizar Compra</button>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="calculator-button" id="toggle-calculator">Calculadora</div>
+        
+        <div class="calculator-container">
+            <div class="calculator">
+                <input type="text" id="display" value="0" readonly>
+                <div class="buttons">
+                    <button class="operator" value="+">+</button>
+                    <button class="operator" value="-">-</button>
+                    <button class="operator" value="*">*</button>
+                    <button class="operator" value="/">/</button>
+                    <button value="1">1</button>
+                    <button value="2">2</button>
+                    <button value="3">3</button>
+                    <button value="4">4</button>
+                    <button value="5">5</button>
+                    <button value="6">6</button>
+                    <button value="7">7</button>
+                    <button value="8">8</button>
+                    <button value="9">9</button>
+                    <button value="0">0</button>
+                    <button value="." class="decimal">.</button>
+                    <button id="clear" class="clear">C</button>
+                    <button id="calculate" class="equal">=</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Agregar evento de cambio a las entradas de cantidad
+            $('body').on('input', '.cantidad', function () {
+                actualizarSubtotal($(this));
+                actualizarResumenCompra();
+            });
+
+            // Función para actualizar el subtotal de una fila
+            function actualizarSubtotal(input) {
+                var cantidad = input.val();
+                var precio = input.data('precio');
+                var subtotal = cantidad * precio;
+                input.closest('tr').find('.subtotal').text(subtotal);
+            }
+
+            // Función para actualizar el resumen de la compra
+            function actualizarResumenCompra() {
+                var resumenCompra = $('#resumenCompra');
+                resumenCompra.empty();
+
+                var total = 0;
+
+                $('.cantidad').each(function () {
+                    var cantidad = parseInt($(this).val());
+                    var nombre = $(this).closest('tr').find('td:first').text();
+                    var subtotal = cantidad * parseInt($(this).data('precio'));
+
+                    if (cantidad > 0) {
+                        var row = "<tr>" +
+                            "<td>" + nombre + "</td>" +
+                            "<td>" + cantidad + "</td>" +
+                            "<td>" + subtotal + "</td>" +
+                            "</tr>";
+
+                        resumenCompra.append(row);
+
+                        total += subtotal;
+                    }
+                });
+
+                $('#total').text(total);
+            }
+
+            // Agregar evento de clic al botón de finalizar compra
+            $('#finalizarCompra').on('click', function () {
+                var totalCompra = $('#total').text();
+                alert('Total de la compra: ' + totalCompra);
+            });
+        });
+    </script>
+
+</body>
+
+</html>
