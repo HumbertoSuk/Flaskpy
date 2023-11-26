@@ -90,19 +90,26 @@ Accede a la aplicacion
 
 Explora el Catálogo:
 
-- 1 `Iniciar sesion:`  en el campo Usuario y Contraseña poner los correspondientes del usuario, si no se tiene por default es el usuario Admin y contra 123.
-     - Si no coinciden te mandara un error. 
+-  `Iniciar sesion:`  en el campo Usuario y Contraseña poner los correspondientes del usuario, si no se tiene por default es el usuario Admin y contra 123.
+     - Si no coinciden te mandara un error.
 
-Desde la página del producto, haz clic en el botón "Agregar al Carrito".
-Visita tu carrito para revisar los productos seleccionados.
-Proceso de Compra:
+  Si se hace correctamente se puede visualizar la pantalla principal, las opciones desplegadas dependeran del tipo de usuario, si eres administrador tienes acceso total y puedes editar, de lo contrario si eres solo usuario solo puedes visualizar la tienda, acerca de y la calculadora.
+  
+- `Calculadora:` La calculadora es visible en todos los lugares del sitio, al darle clic se despliega la calculadora, dar de nuevo clic se oculta, como se muestre dependera del tamaño de tu resolucion.
 
-En la página del carrito, haz clic en "Comprar Ahora" para iniciar el proceso de compra.
-Completa la información requerida para la compra.
-Finalización de la Compra:
+-  `catalogo:` en el apartado de catalogo tenemos el CRUD, es decir agregar, eliminar, mostrar y actualizar productos de nuestra tienda, se despliega en una lista todos los productos, en la parte superior tenemos el formulario para agregar uno, tenemos el nombre, la URL de la imagen y el precio; el ID se hace automaticamente ya que es un autoincrementable. Al darle a agregar se actualiza la tabla automaticamente. si no seleccionamos un campo marca un error y no deja agregar.
+    - Tenemos en catalogo la columna de acciones, donde se puede eliminar y editar un producto ya hecho, si damos a eliminar se muestra 
+      un mensaje para confirmar su eliminacion, si se da a cancelar se anula la accion, pero si se acepta se elimina permanentemente.
+    - Para editar es un poco diferente asl dar editar se despliega un formulario donde se autocompleta con los datos del producto, si se       quiere editar se puede cambiar a un campo y darle a guardar cambios, donde se actualizara la pagina mostrando los nuevos datos 
+      cargados 
+- `usuarios:` Para el apartado de usuarios se usa el mismo funcionamiento, solo que este no muestra la contaseña por seguridad, puede 
+   cambiar los datos en editar y en eliminar solo si se confirma el aceptar. 
+- `tienda:` el apartado de tienda tiene los productos desplegados en tarjetas donde se pueden añadir en el carrito, cuando se agrega al carrito el resumen de la compra se actualiza, mostrando el producto y totall dependiendo de lo que se haya ingresado, finalizando la comprar se crea el ticket con el resumen de compra, tenemos que se limpia todo lo del resumen.
+- La tienda no afecta a la base de datos ya que solo usa el almacenamiento local.
+  
+- `acerca de:` es un apartado que muestra el texto acerca de la tienda.
 
-Revisa y confirma tu compra.
-¡Felicidades! Has completado con éxito una compra en la Tienda de Cafetería.
+-`logout:` Para desloguearte solo se preciona desde cualquier seccion el boton de logout y se redirege a login.
 
 ## Contribuciones
 
