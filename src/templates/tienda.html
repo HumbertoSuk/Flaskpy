@@ -3,7 +3,7 @@
 
 <head>
     <title>Coffee & Dreams - Tienda</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tienda.css') }}">
 </head>
 
 <body>
@@ -33,45 +33,34 @@
 
         <div class="container">
             <h1>Tienda</h1>
-
-            <!-- Tabla de productos -->
-            <table class="table" id="tienda-table">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Imagen</th>
-                        <th>Precio</th>
-                        <th>Cantidad</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Aquí se llenará dinámicamente la tabla con productos -->
-                    {% for producto in productos %}
-                    <tr>
-                        <td>{{ producto.nombre }}</td>
-                        <td><img src="{{ producto.imagen }}" alt="Imagen del producto"></td>
-                        <td>{{ producto.precio }}</td>
-                        <td>
-                            <input type="number" class="cantidad" min="0" value="0" data-precio="{{ producto.precio }}">
-                        </td>
-                        <td class="subtotal">0</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <hr>
+            
+            <!-- Contenedor de las tarjetas de productos utilizando flexbox -->
+            <div class="product-cards-container">
+                <!-- Ejemplo de tarjeta de producto -->
+                {% for producto in productos %}
+                    <!-- Tarjeta de producto -->
+                    <div class="product-card">
+                        <img src="{{ producto.imagen }}" alt="Imagen del {{ producto.nombre }}">
+                        <h3 class="product-name">{{ producto.nombre }}</h3>
+                        <p class="product-price">Precio: ${{ producto.precio }}</p>
+                        <label for="quantity{{ producto.id }}">Cantidad:</label>
+                        <input type="number" id="quantity{{ producto.id }}" name="quantity{{ producto.id }}" min="0">
+                        <button class="btn-add-to-cart" data-precio="{{ producto.precio }}">Agregar al carrito</button>
+                    </div>
+                {% endfor %}
+            </div>
 
             <div class="row">
                 <div class="col-md-4 offset-md-8 resumen-compra">
                     <h3>Resumen de Compra</h3>
+                    <!-- Tabla de resumen de compra -->
                     <table class="table">
                         <thead>
                             <tr>
                                 <th>Producto</th>
                                 <th>Cantidad</th>
-                                <th>Subtotal</th>
+                                <th>Total</th> <!-- Cambiado de "Subtotal" a "Total" -->
+                                <th>Acciones</th> <!-- Nueva columna para el botón "Quitar" -->
                             </tr>
                         </thead>
                         <tbody id="resumenCompra">
@@ -79,7 +68,7 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="2">Total:</td>
+                                <td colspan="3">Total:</td> <!-- Fusionar las celdas de Producto, Cantidad, y Subtotal en una sola fila -->
                                 <td id="total">0</td>
                             </tr>
                         </tfoot>
@@ -87,10 +76,7 @@
                     <button class="btn btn-primary" id="finalizarCompra">Finalizar Compra</button>
                 </div>
             </div>
-
-        </div>
-
-
+            
         <div class="calculator-button" id="toggle-calculator">Calculadora</div>
         
         <div class="calculator-container">
@@ -122,55 +108,103 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script>
         $(document).ready(function () {
-            // Agregar evento de cambio a las entradas de cantidad
-            $('body').on('input', '.cantidad', function () {
-                actualizarSubtotal($(this));
-                actualizarResumenCompra();
-            });
+    // Agregar evento de clic al botón "Agregar al carrito"
+    $('body').on('click', '.btn-add-to-cart', function () {
+        var cantidadInput = $(this).siblings('input');
+        var cantidad = parseInt(cantidadInput.val());
 
-            // Función para actualizar el subtotal de una fila
-            function actualizarSubtotal(input) {
-                var cantidad = input.val();
-                var precio = input.data('precio');
-                var subtotal = cantidad * precio;
-                input.closest('tr').find('.subtotal').text(subtotal);
-            }
+        if (cantidad > 0) {
+            var nombre = $(this).siblings('.product-name').text();
+            var precio = parseInt($(this).data('precio'));
+            var subtotal = cantidad * precio;
 
-            // Función para actualizar el resumen de la compra
-            function actualizarResumenCompra() {
-                var resumenCompra = $('#resumenCompra');
-                resumenCompra.empty();
+            // Crear una fila para la tabla de resumen
+            var row = "<tr>" +
+                "<td>" + nombre + "</td>" +
+                "<td>" + cantidad + "</td>" +
+                "<td class='subtotal'>" + subtotal + "</td>" +
+                "<td><button class='btn-remove-from-cart'>Quitar</button></td>" +
+                "</tr>";
 
-                var total = 0;
+            // Agregar la fila a la tabla de resumen
+            $('#resumenCompra').append(row);
 
-                $('.cantidad').each(function () {
-                    var cantidad = parseInt($(this).val());
-                    var nombre = $(this).closest('tr').find('td:first').text();
-                    var subtotal = cantidad * parseInt($(this).data('precio'));
+            // Actualizar el total
+            actualizarTotal();
 
-                    if (cantidad > 0) {
-                        var row = "<tr>" +
-                            "<td>" + nombre + "</td>" +
-                            "<td>" + cantidad + "</td>" +
-                            "<td>" + subtotal + "</td>" +
-                            "</tr>";
+            // Limpiar la cantidad en el input
+            cantidadInput.val('');
+        }
+    });
 
-                        resumenCompra.append(row);
+    // Agregar evento de clic al botón "Quitar"
+    $('body').on('click', '.btn-remove-from-cart', function () {
+        $(this).closest('tr').remove();
+        actualizarTotal();
+    });
 
-                        total += subtotal;
-                    }
-                });
+    // Función para actualizar el total
+    function actualizarTotal() {
+        var total = 0;
 
-                $('#total').text(total);
-            }
-
-            // Agregar evento de clic al botón de finalizar compra
-            $('#finalizarCompra').on('click', function () {
-                var totalCompra = $('#total').text();
-                alert('Total de la compra: ' + totalCompra);
-            });
+        $('.subtotal').each(function () {
+            total += parseInt($(this).text());
         });
+
+        $('#total').text(total);
+    }
+
+
+
+ // Agregar evento de clic al botón de finalizar compra
+ $('#finalizarCompra').on('click', function () {
+                var totalCompra = $('#total').text();
+
+                // Obtener la información de la compra
+                var datosCompra = obtenerDatosCompra();
+
+                // Guardar la información en localStorage
+                localStorage.setItem('datosCompra', JSON.stringify(datosCompra));
+
+                // Limpiar el resumen de la compra
+                $('#resumenCompra').empty();
+                // Actualizar el total a cero
+                $('#total').text('0');
+
+    // Crear un enlace (oculto) con el atributo href configurado
+    var ticketUrl = '/ticket';
+    var link = document.createElement('a');
+    link.href = ticketUrl;
+
+    // Abrir la ventana emergente en respuesta a un clic simulado en el enlace
+    var windowFeatures = 'width=460,height=720';
+    window.open(link.href, 'TicketWindow', windowFeatures);
+            });
+
+
+// Función para obtener la información de la compra
+function obtenerDatosCompra() {
+    var datosCompra = [];
+
+    // Recorrer las filas de la tabla de resumen de compra
+    $('#resumenCompra tr').each(function (index, row) {
+        var cells = $(row).find('td');
+        var item = {
+            producto: $(cells[0]).text(),
+            cantidad: $(cells[1]).text(),
+            subtotal: $(cells[2]).text(),
+        };
+        datosCompra.push(item);
+    });
+
+    return datosCompra;
+}
+
+
+});
+
     </script>
+    <script src="{{ url_for('static', filename='js/scriptCalculadora.js') }}"></script>
 
 </body>
 

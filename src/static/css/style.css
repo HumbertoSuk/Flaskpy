@@ -316,11 +316,11 @@ h3 {
     color: #d1cfcf; /* Color de fuente negro */
 }
 
-/* Agregar estilos para el contenedor del formulario */
+/* Ajusta el margen y el padding del contenedor del formulario */
 .form-container {
-    background-color: #865d2e; /* Color café oscuro */
-    width: 1120px; /* Ancho del formulario */
-    margin: 0 auto; /* Centrar horizontalmente */
+    background-color: #865d2e;
+    width: 60%;
+    margin: 20px auto; /* Ajusta el margen exterior del contenedor */
     border-radius: 5px;
     padding: 20px;
     position: relative;
@@ -329,15 +329,19 @@ h3 {
 
 
 
+
 /*Tablas --------------------------------------- */
+/* Agrega margen a la tabla y espaciado entre celdas */
 table {
-    width: 100%;
+    width: 85%;
     border-collapse: collapse;
     margin-top: 20px;
+    margin-bottom: 20px; /* Agrega margen inferior */
+    margin-left: 7%;
 }
 
 th, td {
-    border: 1px solid #ccc;
+    border: 4px solid #331212;
     padding: 10px;
 }
 
@@ -346,9 +350,15 @@ th {
     color: #fff;
 }
 
-tbody tr:nth-child(even) {
-    background-color: #f2f2f2;
+tbody tr {
+    background-color: #fff; /* Cambiar a un color sólido, por ejemplo, blanco */
+
 }
+tbody tr:nth-child(even) {
+    background-color: #b9aa89; /* Cambiar a un color sólido, por ejemplo, blanco */
+
+}
+
 
 
 /* imagen */
@@ -496,7 +506,7 @@ a.btn-logout {
 
     input[type="text"],
     input[type="password"] {
-        width: 100%; /* Hacer que los campos de texto ocupen el 100% del ancho */
+        width: 90%; /* Hacer que los campos de texto ocupen el 100% del ancho */
         margin-right: 0; /* Eliminar el margen derecho en campos de texto */
     }
 
@@ -541,9 +551,10 @@ a.btn-logout {
     }
 
     .calculator input {
-        width: 80%; /* Reducir el ancho del input */
+        width: 70%; /* Reducir el ancho del input */
         font-size: 14px; /* Reducir el tamaño de la fuente del input */
         margin-bottom: 10px; /* Agregar espacio inferior */
+
     }
 
     .calculator button {
@@ -579,7 +590,7 @@ a.btn-logout {
     }
 
     .form-container {
-        width: 100%; /* Hacer que el contenedor del formulario ocupe el 100% del ancho */
+        width: 80%; /* Hacer que el contenedor del formulario ocupe el 100% del ancho */
     }
 
     #formularioEdicion {
@@ -691,3 +702,4 @@ a.btn-logout:hover {
     background: #9f7e58; /* Color avellana al pasar el mouse */
     transition: background 0.3s ease-in-out; /* Transición de color */
 }
+

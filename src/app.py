@@ -73,12 +73,6 @@ def catalogo():
     return render_template("catalogo.html")
 
 
-@app.route("/ticket")
-@login_required
-def ticket():
-    return render_template("ticket.html")
-
-
 @app.route("/logout")
 @login_required
 def logout():
@@ -225,6 +219,13 @@ def tienda():
         return render_template("tienda.html", productos=productos)
     except Exception as ex:
         return f"Error: {ex}"
+
+
+@app.route('/ticket')
+@login_required
+def ticket():
+    # Aquí deberías pasar los datos necesarios para el ticket, por ejemplo, los elementos del carrito.
+    return render_template('ticket.html')
 
 
 if __name__ == '__main__':
