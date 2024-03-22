@@ -27,6 +27,24 @@ CREATE TABLE productos (
     precio DECIMAL(10, 2) NOT NULL
 );
 
+CREATE TABLE venta (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    usuario_id SMALLINT UNSIGNED NOT NULL,  
+    total DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES users(id)
+);
+
+CREATE TABLE detalle_venta (
+    id SERIAL PRIMARY KEY,
+    venta_id INT UNSIGNED NOT NULL,
+    producto_id INT NOT NULL,
+    cantidad INTEGER NOT NULL,
+    precio_unitario DECIMAL(10, 2) NOT NULL,
+    subtotal DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (venta_id) REFERENCES venta(id),
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
 
 
 
@@ -170,6 +188,62 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE realizar_venta(
+    IN pUsuarioId INT,
+    IN pDatosVenta JSON
+)
+BEGIN
+    DECLARE ventaId INT;
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE producto_id INT; -- Declarar la variable producto_id
+    DECLARE cantidad INT;
+    DECLARE precio_unitario DECIMAL(10, 2);
+
+    DECLARE cur CURSOR FOR 
+        SELECT producto_id, cantidad, precio_unitario 
+        FROM JSON_TABLE(pDatosVenta, '$[*]' 
+            COLUMNS (
+                producto_id INT PATH '$.producto_id', 
+                cantidad INT PATH '$.cantidad', 
+                precio_unitario DECIMAL(10, 2) PATH '$.precio_unitario')
+        ) AS detalles_venta;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    -- Iniciar transacción
+    START TRANSACTION;
+
+    -- Insertar la venta en la tabla 'venta'
+    INSERT INTO venta (usuario_id, total) VALUES (pUsuarioId, 0);
+    SET ventaId = LAST_INSERT_ID();
+
+    -- Iterar sobre los detalles de la venta
+    OPEN cur;
+    read_loop: LOOP
+        FETCH cur INTO producto_id, cantidad, precio_unitario;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Insertar el detalle de la venta en la tabla 'detalle_venta'
+        INSERT INTO detalle_venta (venta_id, producto_id, cantidad, precio_unitario, subtotal) 
+        VALUES (ventaId, producto_id, cantidad, precio_unitario, cantidad * precio_unitario);
+    END LOOP;
+    CLOSE cur;
+
+    -- Calcular el total de la venta
+    UPDATE venta SET total = (SELECT SUM(subtotal) FROM detalle_venta WHERE venta_id = ventaId) WHERE id = ventaId;
+
+    -- Confirmar transacción
+    COMMIT;
+END;
+//
+
+DELIMITER ;
+
 
 
 

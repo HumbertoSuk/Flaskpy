@@ -19,6 +19,7 @@
                 {% if current_user.usertype == 1 %}
                     <li id="catalog-link"><a href="{{ url_for('mostrar_productos') }}" href="{{ url_for('catalogo') }}">Catálogo</a></li>
                     <li><a href="{{ url_for('mostrar_usuarios') }}">Usuarios</a></li>
+                    <li><a href="{{ url_for('ventas') }}">Ventas</a></li>
                     {% endif %}
                 <li><a href="{{ url_for('tienda') }}">Tienda</a></li>
                 <li><a href="{{ url_for('acerca') }}">Acerca de</a></li> 

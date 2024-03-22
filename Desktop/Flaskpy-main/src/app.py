@@ -1,3 +1,5 @@
+import json
+from flask import jsonify, request
 from flask import Flask, redirect, render_template, request, url_for, flash, abort, jsonify
 from flask_mysqldb import MySQL
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -5,6 +7,9 @@ from functools import wraps
 from config import config
 from models.ModelUsers import ModelUsers
 from models.entities.users import User
+from models.entities.Venta import Venta
+from flask import jsonify
+
 
 app = Flask(__name__)
 app.config.from_object(config['development'])
@@ -226,6 +231,75 @@ def tienda():
 def ticket():
     # Aquí deberías pasar los datos necesarios para el ticket, por ejemplo, los elementos del carrito.
     return render_template('ticket.html')
+
+# Realizar venta
+
+
+@app.route("/realizar_venta", methods=["POST"])
+@login_required
+def realizar_venta():
+    try:
+        usuario_id = current_user.id
+        datos_venta = request.json['datosCompra']
+
+        print("Inicio de la función realizar_venta")
+
+        # Obtener los IDs de producto, cantidad y subtotal en listas separadas
+        productos_ids = [int(venta['id_producto']) for venta in datos_venta]
+        cantidades = [int(venta['cantidad']) for venta in datos_venta]
+        subtotales = [float(venta['subtotal']) for venta in datos_venta]
+
+        # Empaquetar los datos en un solo objeto
+        datos_venta_empaquetados = {
+            'productos_ids': productos_ids,
+            'cantidades': cantidades,
+            'subtotales': subtotales
+        }
+
+        # Llamar al procedimiento realizar_venta con los datos de venta empaquetados
+        venta_ids = ModelUsers.realizar_venta(
+            db, usuario_id, datos_venta_empaquetados)
+
+        print("Venta finalizada:", venta_ids)
+
+        return jsonify({"venta_ids": venta_ids}), 200
+
+    except Exception as e:
+        print("Error al realizar la venta:", str(e))
+        return jsonify({"error": "Ocurrió un error al procesar la venta"}), 500
+
+
+# Ruta para la página de ventas
+@app.route('/ventas')
+@login_required
+@admin_required
+def ventas():
+    try:
+        ventas = ModelUsers.obtener_ventas_desde_bd(db)
+        return render_template('ventas.html', ventas=ventas)
+    except Exception as ex:
+        return f"Error: {ex}"
+
+
+@app.route("/detalle_venta/<int:venta_id>")
+@login_required
+def detalle_venta(venta_id):
+    try:
+        print("Solicitud para obtener detalles de venta para la venta ID:", venta_id)
+        detalles_venta = ModelUsers.obtener_detalles_venta(db, venta_id)
+        detalles_serializados = [{
+            'id': detalle.id,
+            'producto_id': detalle.producto_id,
+            'nombre_producto': detalle.nombre_producto,
+            'precio_unitario': detalle.precio_unitario,
+            'cantidad': detalle.cantidad,
+            'subtotal': detalle.subtotal
+        } for detalle in detalles_venta]
+        print("Detalles de venta obtenidos:", detalles_serializados)
+        return jsonify({"detalle_venta": detalles_serializados})
+    except Exception as ex:
+        print("Error al obtener detalles de la venta:", str(ex))
+        return jsonify(error=str(ex)), 500
 
 
 if __name__ == '__main__':

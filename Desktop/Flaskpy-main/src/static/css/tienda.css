@@ -478,7 +478,11 @@ a.btn-logout {
 
 
 
-
+button {
+    width: 80%; /* Hacer que los botones ocupen el 100% del ancho */
+    margin: 10px auto; /* Centrar los botones y agregar margen superior e inferior */
+    margin-left: 0; /* Eliminar el margen izquierdo en botones */
+}
 
 
 
@@ -774,5 +778,4 @@ a.btn-logout:hover {
 .table {
     width: 70%;
 }
-
 

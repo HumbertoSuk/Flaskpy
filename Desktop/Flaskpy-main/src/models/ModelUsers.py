@@ -1,5 +1,8 @@
+import json
 from .entities.users import User
 from .entities.productos import Producto
+from .entities.Venta import Venta
+from .entities.DetalleVenta import DetalleVenta
 
 
 class ModelUsers:
@@ -141,3 +144,81 @@ class ModelUsers:
                 db.connection.commit()
         except Exception as ex:
             raise Exception(ex)
+
+    @classmethod
+    def realizar_venta(cls, db, usuario_id, datos_venta):
+        print("Inicio de la función realizar_venta")
+        try:
+            with db.connection.cursor() as cursor:
+                venta_ids = []
+
+                # Desempaquetar los datos de venta
+                productos_ids = datos_venta['productos_ids']
+                cantidades = datos_venta['cantidades']
+                subtotales = datos_venta['subtotales']
+
+                # Convertir listas a JSON
+                productos_ids_json = json.dumps(productos_ids)
+                cantidades_json = json.dumps(cantidades)
+                subtotales_json = json.dumps(subtotales)
+
+                for pProductoId, pCantidad, pSubtotal in zip(productos_ids, cantidades, subtotales):
+                    print(
+                        f"Producto ID: {pProductoId}, Cantidad: {pCantidad}, Subtotal: {pSubtotal}")
+
+                    cursor.callproc('realizar_venta', [
+                                    usuario_id, productos_ids_json, cantidades_json, subtotales_json])
+
+                    result = cursor.fetchone()
+                    print(f"Resultado de la venta: {result}")
+                    venta_ids.append(result[0] if result else None)
+
+                    cursor.nextset()  # Limpiar resultados pendientes
+
+                db.connection.commit()
+
+                if None in venta_ids:
+                    raise ValueError("Error al obtener los IDs de venta")
+
+                return venta_ids
+
+        except Exception as ex:
+            print(f"Error en realizar_venta: {ex}")
+            raise Exception(ex)
+
+    @classmethod
+    def obtener_ventas_desde_bd(cls, db):
+        try:
+            with db.connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM venta")
+                rows = cursor.fetchall()
+                ventas = [
+                    Venta(row[0], row[1], row[2], row[3])
+                    for row in rows
+                ]
+                return ventas
+        except Exception as ex:
+            raise Exception(ex)
+
+    @classmethod
+    def obtener_detalles_venta(cls, db, venta_id):
+        try:
+            with db.connection.cursor() as cursor:
+                query = """
+                SELECT dv.id, dv.producto_id, p.nombre, p.precio, dv.cantidad, dv.subtotal
+                FROM detalle_venta dv
+                JOIN productos p ON dv.producto_id = p.id
+                WHERE dv.venta_id = %s
+                """
+                cursor.execute(query, (venta_id,))
+                rows = cursor.fetchall()
+
+                detalles_venta = [
+                    DetalleVenta(row[0], row[1], row[2],
+                                 row[3], row[4], row[5])
+                    for row in rows
+                ]
+                return detalles_venta
+        except Exception as ex:
+            raise Exception(
+                "Error al obtener detalles de la venta: " + str(ex))

@@ -13,6 +13,7 @@
 
     <h3>Usuario: {{ current_user.fullname }}</h3>
 
+    <p id="fecha-impresion">Fecha de Impresión: <span id="fecha"></span></p>
 
     <table border="1" id="ticketTable">
         <thead>
@@ -33,29 +34,42 @@
 
     <script>
         $(document).ready(function () {
-            // Recuperar la información de la compra desde localStorage
+            // Obtener los datos de la compra almacenados localmente
             var datosCompra = JSON.parse(localStorage.getItem('datosCompra'));
+            console.log('Datos de compra recuperados:', datosCompra);
+    
+            // Mostrar el ticket con los datos recuperados
+            mostrarTicket(datosCompra);
+    
+            function mostrarTicket(datosCompra) {
+                var totalGeneral = 0;
+                if (datosCompra && datosCompra.length > 0) {
+                    for (var i = 0; i < datosCompra.length; i++) {
+                        var row = "<tr>" +
+                            "<td>" + datosCompra[i].producto + "</td>" +
+                            "<td>" + datosCompra[i].cantidad + "</td>" +
+                            "<td>" + datosCompra[i].subtotal + "</td>" +
+                            "</tr>";
+                        $('#ticketTable').append(row);
+                        // Sumar al total general
+                        totalGeneral += parseFloat(datosCompra[i].subtotal);
+                    }
+                }
+                console.log('Total general:', totalGeneral);
+                // Mostrar el total general
+                $('#valortotal').text(totalGeneral.toFixed(2));
 
-            // Mostrar la información en la tabla
-            var totalGeneral = 0;
-            for (var i = 0; i < datosCompra.length; i++) {
-                var row = "<tr>" +
-                    "<td>" + datosCompra[i].producto + "</td>" +
-                    "<td>" + datosCompra[i].cantidad + "</td>" +
-                    "<td>" + datosCompra[i].subtotal + "</td>" +
-                    "</tr>";
-                $('#ticketTable').append(row);
-
-                // Sumar al total general
-                totalGeneral += parseFloat(datosCompra[i].subtotal);
+                // Mostrar la fecha actual de impresión del ticket
+                var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'America/Tijuana' };
+                var fechaActual = new Date().toLocaleString('es-MX', options);
+                $('#fecha').text(fechaActual);
             }
-
-            // Mostrar el total general
-            $('#valortotal').text(totalGeneral.toFixed(2));
-
+            
             // Limpiar localStorage
             localStorage.removeItem('datosCompra');
         });
     </script>
+    
+    
 </body>
 </html>
