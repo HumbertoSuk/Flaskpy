@@ -50,6 +50,21 @@ class ModelUsers:
             raise Exception(ex)
 
     @classmethod
+    def obtener_todos_los_productos2(cls, db):
+        try:
+            with db.connection.cursor() as cursor:
+                cursor.callproc('obtener_productos')
+                rows = cursor.fetchall()
+                productos = [Producto(row[0], row[1], row[2], row[3])
+                             for row in rows]
+                productos_serializados = [
+                    producto.to_dict() for producto in productos]
+                # Retorna un diccionario con una clave "productos"
+                return {"productos": productos_serializados}
+        except Exception as ex:
+            raise Exception(ex)
+
+    @classmethod
     def agregar_producto(cls, db, nombre, imagen, precio):
         try:
             with db.connection.cursor() as cursor:

@@ -1,5 +1,3 @@
-import json
-from flask import jsonify, request
 from flask import Flask, redirect, render_template, request, url_for, flash, abort, jsonify
 from flask_mysqldb import MySQL
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -7,9 +5,6 @@ from functools import wraps
 from config import config
 from models.ModelUsers import ModelUsers
 from models.entities.users import User
-from models.entities.Venta import Venta
-from flask import jsonify
-
 
 app = Flask(__name__)
 app.config.from_object(config['development'])
@@ -28,8 +23,75 @@ def admin_required(func):
         if not current_user.is_authenticated or current_user.usertype != 1:
             abort(403)
         return func(*args, **kwargs)
-
     return decorated_view
+
+# SOAP API webservice
+
+# Ruta para obtener todos los productos
+
+
+@app.route('/api/productos', methods=['GET'])
+def obtener_productosapi():
+    try:
+        productos = ModelUsers.obtener_todos_los_productos(db)
+        productos_serializados = [producto.to_dict() for producto in productos]
+        return jsonify(productos_serializados), 200
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+# Ruta para agregar un producto
+
+
+@app.route('/api/productos', methods=['POST'])
+def agregar_productoapi():
+    try:
+        data = request.json
+        nombre = data.get('nombre')
+        imagen = data.get('imagen_url')
+        precio = data.get('precio')
+
+        if nombre and imagen and precio:
+            ModelUsers.agregar_producto(db, nombre, imagen, precio)
+            return jsonify({"mensaje": "Producto agregado correctamente"}), 201
+        else:
+            return jsonify({"error": "Datos incompletos"}), 400
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+# Ruta para eliminar un producto
+
+
+@app.route('/api/productos/<int:producto_id>', methods=['DELETE'])
+def eliminar_productoapi(producto_id):
+    try:
+        ModelUsers.eliminar_producto(db, producto_id)
+        return jsonify({"mensaje": "Producto eliminado correctamente"}), 200
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+# Ruta para actualizar un producto
+
+
+@app.route('/api/productos/<int:producto_id>', methods=['PUT'])
+def actualizar_productoapi(producto_id):
+    try:
+        data = request.json
+        nuevo_nombre = data.get('nombre')
+        nueva_imagen = data.get('imagen_url')
+        nuevo_precio = data.get('precio')
+
+        if nuevo_nombre and nueva_imagen and nuevo_precio:
+            # Actualizar el producto en la base de datos
+            ModelUsers.actualizar_producto(
+                db, producto_id, nuevo_nombre, nueva_imagen, nuevo_precio)
+            return jsonify({"mensaje": "Producto actualizado correctamente"}), 200
+        else:
+            return jsonify({"error": "Datos incompletos"}), 400
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+
+# Termina el codigo de SOAP-----------------------------------------------------------------------
 
 
 @app.route("/")
@@ -93,8 +155,11 @@ def agregar_producto():
         nombre = request.form['nombre']
         imagen = request.form['imagen']
         precio = request.form['precio']
-        ModelUsers.agregar_producto(db, nombre, imagen, precio)
-
+        try:
+            ModelUsers.agregar_producto(db, nombre, imagen, precio)
+            flash("Producto agregado correctamente")
+        except Exception as ex:
+            flash(f"Error al agregar el producto: {ex}")
     return redirect(url_for("catalogo"))
 
 
@@ -116,7 +181,11 @@ def editar_producto(id):
 @login_required
 @admin_required
 def eliminar_producto(id):
-    ModelUsers.eliminar_producto(db, id)
+    try:
+        ModelUsers.eliminar_producto(db, id)
+        flash("Producto eliminado correctamente")
+    except Exception as ex:
+        flash(f"Error al eliminar el producto: {ex}")
     return redirect(url_for("catalogo"))
 
 
@@ -126,9 +195,8 @@ def mostrar_productos():
         productos = ModelUsers.obtener_todos_los_productos(db)
         return render_template('catalogo.html', productos=productos)
     except Exception as ex:
-        return f"Error: {ex}"
-
-# Obtener productos como JSON
+        flash(f"Error: {ex}")
+        return redirect(url_for("catalogo"))
 
 
 @app.route('/obtener_productos', methods=['GET'])
@@ -147,7 +215,6 @@ def obtener_productos():
 def mostrar_usuarios():
     try:
         usuarios = ModelUsers.obtener_todos_los_usuarios(db)
-
         # Excluye la contraseña al pasar los datos a la plantilla
         usuarios_data = [
             {
@@ -159,10 +226,10 @@ def mostrar_usuarios():
             }
             for usuario in usuarios
         ]
-
         return render_template('usuarios.html',  usuarios=usuarios_data)
     except Exception as ex:
-        return f"Error: {ex}"
+        flash(f"Error: {ex}")
+        return redirect(url_for("principal"))
 
 
 @app.route("/agregar_usuario", methods=["POST"])
@@ -174,8 +241,12 @@ def agregar_usuario():
         password = request.form['password']
         fullname = request.form['fullname']
         usertype = request.form['usertype']
-        ModelUsers.agregar_usuario(db, username, password, fullname, usertype)
-
+        try:
+            ModelUsers.agregar_usuario(
+                db, username, password, fullname, usertype)
+            flash("Usuario agregado correctamente")
+        except Exception as ex:
+            flash(f"Error al agregar el usuario: {ex}")
     return redirect(url_for("mostrar_usuarios"))
 
 
@@ -186,33 +257,39 @@ def editar_usuario(usuario_id):
     try:
         if request.method == "POST":
             username = request.form.get('username')
-            password = request.form.get('password')  # Agregado
+            password = request.form.get('password')
             fullname = request.form.get('fullname')
             usertype = request.form.get('usertype')
 
             if username is not None and password is not None and fullname is not None and usertype is not None:
                 ModelUsers.actualizar_usuario(
                     db, usuario_id, username, password, fullname, usertype)
-                return jsonify(success=True)
-
-            return jsonify(success=False, error="Campos requeridos faltantes")
+                flash("Usuario actualizado correctamente")
+            else:
+                flash("Datos incompletos")
+            return redirect(url_for("mostrar_usuarios"))
 
         # For GET requests, return the existing user information
         user = ModelUsers.obtener_usuario_por_id(db, usuario_id)
         if user:
             return render_template("edit_user.html", usuario=user)
         else:
-            return jsonify(success=False, error="Usuario no encontrado")
-
+            flash("Usuario no encontrado")
+            return redirect(url_for("mostrar_usuarios"))
     except Exception as ex:
-        return jsonify(success=False, error=str(ex)), 500
+        flash(f"Error: {ex}")
+        return redirect(url_for("mostrar_usuarios"))
 
 
 @app.route("/eliminar_usuario/<int:id>", methods=["POST"])
 @login_required
 @admin_required
 def eliminar_usuario(id):
-    ModelUsers.eliminar_usuario(db, id)
+    try:
+        ModelUsers.eliminar_usuario(db, id)
+        flash("Usuario eliminado correctamente")
+    except Exception as ex:
+        flash(f"Error al eliminar el usuario: {ex}")
     return redirect(url_for("mostrar_usuarios"))
 
 
@@ -223,7 +300,8 @@ def tienda():
         productos = ModelUsers.obtener_todos_los_productos(db)
         return render_template("tienda.html", productos=productos)
     except Exception as ex:
-        return f"Error: {ex}"
+        flash(f"Error: {ex}")
+        return redirect(url_for("principal"))
 
 
 @app.route('/ticket')
@@ -232,8 +310,6 @@ def ticket():
     # Aquí deberías pasar los datos necesarios para el ticket, por ejemplo, los elementos del carrito.
     return render_template('ticket.html')
 
-# Realizar venta
-
 
 @app.route("/realizar_venta", methods=["POST"])
 @login_required
@@ -241,7 +317,6 @@ def realizar_venta():
     try:
         usuario_id = current_user.id
         datos_venta = request.json['datosCompra']
-
         print("Inicio de la función realizar_venta")
 
         # Obtener los IDs de producto, cantidad y subtotal en listas separadas
@@ -261,7 +336,6 @@ def realizar_venta():
             db, usuario_id, datos_venta_empaquetados)
 
         print("Venta finalizada:", venta_ids)
-
         return jsonify({"venta_ids": venta_ids}), 200
 
     except Exception as e:
@@ -269,7 +343,6 @@ def realizar_venta():
         return jsonify({"error": "Ocurrió un error al procesar la venta"}), 500
 
 
-# Ruta para la página de ventas
 @app.route('/ventas')
 @login_required
 @admin_required
@@ -278,7 +351,8 @@ def ventas():
         ventas = ModelUsers.obtener_ventas_desde_bd(db)
         return render_template('ventas.html', ventas=ventas)
     except Exception as ex:
-        return f"Error: {ex}"
+        flash(f"Error: {ex}")
+        return redirect(url_for("principal"))
 
 
 @app.route("/detalle_venta/<int:venta_id>")
@@ -304,4 +378,4 @@ def detalle_venta(venta_id):
 
 if __name__ == '__main__':
     app.config.from_object(config['development'])
-    app.run(debug=True)
+    app.run(debug=True, port=5001)

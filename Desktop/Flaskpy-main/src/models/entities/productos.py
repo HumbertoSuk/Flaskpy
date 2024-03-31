@@ -4,3 +4,12 @@ class Producto:
         self.nombre = nombre
         self.imagen = imagen
         self.precio = precio
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "imagen": self.imagen,
+            # Convertir precio a un tipo serializable, como float
+            "precio": float(self.precio)
+        }
