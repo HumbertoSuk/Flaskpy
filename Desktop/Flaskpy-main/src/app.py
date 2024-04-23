@@ -6,6 +6,7 @@ from config import config
 from models.ModelUsers import ModelUsers
 from models.entities.users import User
 
+
 app = Flask(__name__)
 app.config.from_object(config['development'])
 db = MySQL(app)
@@ -25,7 +26,7 @@ def admin_required(func):
         return func(*args, **kwargs)
     return decorated_view
 
-# SOAP API webservice
+# rest API webservice
 
 # Ruta para obtener todos los productos
 
@@ -89,9 +90,6 @@ def actualizar_productoapi(producto_id):
             return jsonify({"error": "Datos incompletos"}), 400
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
-
-
-# Termina el codigo de SOAP-----------------------------------------------------------------------
 
 
 @app.route("/")
